@@ -2,7 +2,7 @@ name: Check for new UK politics markets
 
 on:
   schedule:
-    - cron: "23 * * * *" # hourly, off the :00 rush so GitHub doesn't delay it
+    - cron: "*/5 * * * *" # every 5 min — GitHub's minimum schedule interval
   workflow_dispatch:
 
 concurrency:

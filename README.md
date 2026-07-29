@@ -1,8 +1,8 @@
 # polymarket-uk-alerts
 
 WhatsApp alert (via CallMeBot) whenever a new UK politics event opens on
-Polymarket. Runs hourly in GitHub Actions — no server, no auth needed for the
-Polymarket side (public Gamma API).
+Polymarket. Runs every 5 minutes in GitHub Actions — no server, no auth
+needed for the Polymarket side (public Gamma API).
 
 ## How it works
 
@@ -38,10 +38,14 @@ alert, and adding a 9th candidate later does not re-alert.
 ## Tuning
 
 - **Cadence**: edit the cron in
-  [check.yml](.github/workflows/check.yml). Hourly ≈ 720 Actions
-  minutes/month on a private repo; every 30 min doubles that — watch the free
-  2,000-minute cap alongside train-alerts (~800/month). Making the repo
-  public removes the cap entirely.
+  [check.yml](.github/workflows/check.yml). Every 5 minutes is GitHub's
+  minimum schedule interval; runs can slip a few minutes at peak times. The
+  repo is **public** so Actions minutes are free and uncapped (a private repo
+  at this cadence would blow through the free 2,000 min/month).
+- **Note**: GitHub disables scheduled workflows after 60 days with no repo
+  activity; state commits from new markets normally reset that clock, but if
+  alerts ever stop after a long quiet spell, re-enable the workflow from the
+  Actions tab.
 - **What counts as UK / politics**: `UK_TAG_IDS` and `POLITICS_TAG_SLUGS` at
   the top of [check.py](src/check.py).
 
