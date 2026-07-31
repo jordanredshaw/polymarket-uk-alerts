@@ -1,20 +1,33 @@
 # polymarket-uk-alerts
 
-WhatsApp alert (via CallMeBot) whenever a new UK politics event opens on
-Polymarket. Runs every 5 minutes in GitHub Actions — no server, no auth
-needed for the Polymarket side (public Gamma API).
+WhatsApp alert (via CallMeBot) whenever a Polymarket event Jordan cares about
+opens. Runs every 5 minutes in GitHub Actions — no server, no auth needed for
+the Polymarket side (public Gamma API).
+
+## Watch groups
+
+1. **UK politics** (🇬🇧): events carrying a UK tag (`uk`, `united-kingdom`,
+   `britain`) AND a politics-flavoured tag (`POLITICS_TAG_SLUGS` in
+   [check.py](src/check.py) — topic, election, party, and person tags,
+   because Polymarket's tagging is inconsistent).
+2. **FIFA story** (⚽): events tagged `fifa`, `world-cup`, `fifa-world-cup`,
+   `uefa`, or `soccer` whose title/description matches story keywords —
+   `infantino` anywhere; FIFA/World Cup context + expansion / sell-off /
+   boycott / 64 / 128 / breakaway / new format / privatisation words; UEFA
+   context + boycott / withdraw / pull out / leave FIFA. Keyword-gated
+   because the `soccer` tag is 2,000+ match markets of noise (`split` is
+   deliberately not a UEFA keyword — Hajduk Split). Known gap: an event
+   tagged only `sports` with none of the five football tags is missed.
 
 ## How it works
 
-1. [check.py](src/check.py) fetches all active, unresolved Polymarket events
-   carrying a UK tag (`uk`, `united-kingdom`, `britain`) from
-   `https://gamma-api.polymarket.com/events?tag_id=...`.
-2. Keeps events that also carry a politics-flavoured tag
-   (`POLITICS_TAG_SLUGS` in check.py — topic, election, party, and person
-   tags, because Polymarket's tagging is inconsistent).
-3. Anything not in [state/seen_events.json](state/seen_events.json) triggers a
-   WhatsApp message with title + link, then gets recorded. The workflow
-   commits the state file back to the repo.
+Each group's events come from
+`https://gamma-api.polymarket.com/events?tag_id=...` (newest 300 per tag —
+new events always land on page 1 of a 5-minute poll, and the API rejects
+deep pagination anyway). Anything matching a group that isn't in
+[state/seen_events.json](state/seen_events.json) triggers a WhatsApp message
+with title + link, then gets recorded. The workflow commits the state file
+back to the repo.
 
 The very first run seeds the state file silently (no alert backlog spam).
 
@@ -46,8 +59,9 @@ alert, and adding a 9th candidate later does not re-alert.
   activity; state commits from new markets normally reset that clock, but if
   alerts ever stop after a long quiet spell, re-enable the workflow from the
   Actions tab.
-- **What counts as UK / politics**: `UK_TAG_IDS` and `POLITICS_TAG_SLUGS` at
-  the top of [check.py](src/check.py).
+- **What counts as a match**: `UK_TAG_IDS` / `POLITICS_TAG_SLUGS` and
+  `FIFA_TAG_IDS` / the `FIFA_*` and `UEFA_*` regexes in
+  [check.py](src/check.py); new groups go in `WATCH_GROUPS`.
 
 ## Manual run
 
