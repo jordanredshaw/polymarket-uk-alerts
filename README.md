@@ -18,6 +18,16 @@ the Polymarket side (public Gamma API).
    because the `soccer` tag is 2,000+ match markets of noise (`split` is
    deliberately not a UEFA keyword — Hajduk Split). Known gap: an event
    tagged only `sports` with none of the five football tags is missed.
+3. **UEFA newsroom** (🔷): every new article on
+   [uefa.com/news-media/news](https://www.uefa.com/news-media/news/), no
+   keyword filter. There is no RSS feed; [uefa_news.py](src/uefa_news.py)
+   polls the editorial API the page itself uses
+   (`editorial.uefa.com/api/cachedsearch/build`, Corporate Communications
+   folder, newest-first) and resolves article links via
+   `www.uefa.com/api/v1/linkrules/article/<id>/`. Akamai quirks are
+   documented in the module docstring (default python UA → 403, fake
+   browser UA → blocked; plain custom UA works). Separate state file:
+   `state/seen_uefa_articles.json`.
 
 ## How it works
 
