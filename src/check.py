@@ -21,9 +21,21 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 GAMMA = "https://gamma-api.polymarket.com"
 UA = {"User-Agent": "polymarket-uk-alerts/1.0 (github.com/jordanredshaw/polymarket-uk-alerts)"}
+
+# Gamma occasionally hangs or 5xxs (read timeout killed a run on 5 Aug 2026);
+# retry API fetches with backoff. WhatsApp sends deliberately do NOT retry —
+# a mid-flight retry could double-send, and a failed send already retries on
+# the next workflow run.
+API = requests.Session()
+API.mount("https://", HTTPAdapter(max_retries=Retry(
+    total=4, connect=4, read=4, backoff_factor=2,
+    status_forcelist=[429, 500, 502, 503, 504], allowed_methods=["GET", "HEAD"],
+)))
 STATE_FILE = Path(__file__).resolve().parent.parent / "state" / "seen_events.json"
 
 # Fetch newest-first and stop after this many events per tag: new events always
@@ -108,7 +120,7 @@ def fetch_events(tag_ids: set[str]) -> dict[str, dict]:
     for tag_id in tag_ids:
         offset = 0
         while offset < MAX_EVENTS_PER_TAG:
-            resp = requests.get(
+            resp = API.get(
                 f"{GAMMA}/events",
                 params={
                     "tag_id": tag_id,

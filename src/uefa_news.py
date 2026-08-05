@@ -29,6 +29,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+# Same retry policy as check.py: API fetches retry with backoff, WhatsApp
+# sends never do (a mid-flight retry could double-send; failed sends already
+# retry on the next workflow run).
+API = requests.Session()
+API.mount("https://", HTTPAdapter(max_retries=Retry(
+    total=4, connect=4, read=4, backoff_factor=2,
+    status_forcelist=[429, 500, 502, 503, 504], allowed_methods=["GET", "HEAD"],
+)))
 
 UA = {
     "User-Agent": "polymarket-uk-alerts/1.0 (+github.com/jordanredshaw/polymarket-uk-alerts)",
@@ -56,7 +67,7 @@ MAX_ARTICLES_PER_MESSAGE = 5
 
 def fetch_articles() -> dict[str, dict]:
     """Newest newsroom articles keyed by article id."""
-    resp = requests.get(
+    resp = API.get(
         "https://editorial.uefa.com/api/cachedsearch/build",
         params=SEARCH_PARAMS,
         headers=UA,
@@ -76,7 +87,7 @@ def fetch_articles() -> dict[str, dict]:
 def article_url(article_id: str) -> str:
     link = f"https://www.uefa.com/api/v1/linkrules/article/{article_id}/"
     try:
-        resp = requests.head(link, headers=UA, allow_redirects=False, timeout=15)
+        resp = API.head(link, headers=UA, allow_redirects=False, timeout=15)
         loc = resp.headers.get("Location", "")
         if loc.startswith("/"):
             return f"https://www.uefa.com{loc}"
