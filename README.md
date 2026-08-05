@@ -60,11 +60,16 @@ alert, and adding a 9th candidate later does not re-alert.
 
 ## Tuning
 
-- **Cadence**: edit the cron in
-  [check.yml](.github/workflows/check.yml). Every 5 minutes is GitHub's
-  minimum schedule interval; runs can slip a few minutes at peak times. The
-  repo is **public** so Actions minutes are free and uncapped (a private repo
-  at this cadence would blow through the free 2,000 min/month).
+- **Cadence**: GitHub throttles `schedule` crons hard — a `*/5` schedule
+  fired every 1–3 **hours** in practice (observed Aug 2026). The real
+  5-minute cadence therefore comes from a [cron-job.org](https://cron-job.org)
+  job that POSTs
+  `https://api.github.com/repos/jordanredshaw/polymarket-uk-alerts/actions/workflows/check.yml/dispatches`
+  with body `{"ref":"main"}` and a fine-grained PAT (this repo only,
+  Actions: read & write) — dispatched runs are not throttled. The workflow's
+  own hourly cron is just a fallback if the external trigger dies. The repo
+  is **public** so Actions minutes are free and uncapped (a private repo at
+  this cadence would blow through the free 2,000 min/month).
 - **Note**: GitHub disables scheduled workflows after 60 days with no repo
   activity; state commits from new markets normally reset that clock, but if
   alerts ever stop after a long quiet spell, re-enable the workflow from the
