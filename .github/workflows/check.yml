@@ -5,6 +5,12 @@ name: Check for new UK politics markets
 # every 1-3h in practice (observed Aug 2026), but dispatched runs fire
 # immediately. The schedule below is only a fallback if the external
 # trigger dies.
+#
+# No marketplace actions (actions/checkout, actions/setup-python) on
+# purpose: during the 6 Aug 2026 GitHub incident, runs died in "Set up job"
+# just downloading those actions, emailing a failure every cadence tick.
+# Plain `run:` steps with the runner's preinstalled git + python3 have no
+# such dependency.
 on:
   schedule:
     - cron: "17 * * * *" # fallback only — see note above
@@ -20,31 +26,32 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Clone repo
+        run: git clone --depth 1 "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" repo
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-
-      - run: pip install -r requirements.txt
+      - name: Install deps
+        run: python3 -m pip install --quiet --user requests
 
       - name: Poll Polymarket and alert
         env:
           WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
           CALLMEBOT_KEY: ${{ secrets.CALLMEBOT_KEY }}
-        run: python src/check.py
+        working-directory: repo
+        run: python3 src/check.py
 
       - name: Poll UEFA newsroom and alert
         if: ${{ !cancelled() }} # run even if the Polymarket step failed
         env:
           WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
           CALLMEBOT_KEY: ${{ secrets.CALLMEBOT_KEY }}
-        run: python src/uefa_news.py
+        working-directory: repo
+        run: python3 src/uefa_news.py
 
       - name: Commit updated state
         if: ${{ !cancelled() }}
+        working-directory: repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
