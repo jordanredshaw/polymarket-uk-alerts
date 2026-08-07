@@ -87,12 +87,15 @@ def fetch_articles() -> dict[str, dict]:
 def article_url(article_id: str) -> str:
     link = f"https://www.uefa.com/api/v1/linkrules/article/{article_id}/"
     try:
-        resp = API.head(link, headers=UA, allow_redirects=False, timeout=15)
+        # Must be GET: UEFA answers HEAD requests with a redirect to /errors/
+        # (shipped bug 3-7 Aug 2026 — alerts linked the error page).
+        resp = API.get(link, headers=UA, allow_redirects=False, timeout=15)
         loc = resp.headers.get("Location", "")
-        if loc.startswith("/"):
-            return f"https://www.uefa.com{loc}"
-        if loc.startswith("http"):
-            return loc
+        if "error" not in loc.lower():
+            if loc.startswith("/"):
+                return f"https://www.uefa.com{loc}"
+            if loc.startswith("http"):
+                return loc
     except requests.RequestException:
         pass
     return link  # the redirect works in a browser even if we couldn't resolve it
