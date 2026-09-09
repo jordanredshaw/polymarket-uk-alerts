@@ -41,13 +41,15 @@ jobs:
         working-directory: repo
         run: python3 src/check.py
 
-      - name: Poll UEFA newsroom and alert
-        if: ${{ !cancelled() }} # run even if the Polymarket step failed
-        env:
-          WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
-          CALLMEBOT_KEY: ${{ secrets.CALLMEBOT_KEY }}
-        working-directory: repo
-        run: python3 src/uefa_news.py
+      # UEFA newsroom watcher DISABLED 9 Sep 2026 at Jordan's request.
+      # To re-enable, restore this step (src/uefa_news.py still works):
+      #   - name: Poll UEFA newsroom and alert
+      #     if: ${{ !cancelled() }}
+      #     env: WHATSAPP_PHONE + CALLMEBOT_KEY from secrets
+      #     working-directory: repo
+      #     run: python3 src/uefa_news.py
+      # On re-enabling, delete state/seen_uefa_articles.json first so it
+      # re-seeds silently instead of alerting the whole backlog since today.
 
       - name: Commit updated state
         if: ${{ !cancelled() }}

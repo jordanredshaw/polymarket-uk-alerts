@@ -18,7 +18,8 @@ the Polymarket side (public Gamma API).
    because the `soccer` tag is 2,000+ match markets of noise (`split` is
    deliberately not a UEFA keyword — Hajduk Split). Known gap: an event
    tagged only `sports` with none of the five football tags is missed.
-3. **UEFA newsroom** (🔷): every new article on
+3. **UEFA newsroom** (🔷) — **DISABLED 9 Sep 2026** (workflow step removed;
+   re-enable per the comment in check.yml): every new article on
    [uefa.com/news-media/news](https://www.uefa.com/news-media/news/), no
    keyword filter. There is no RSS feed; [uefa_news.py](src/uefa_news.py)
    polls the editorial API the page itself uses
